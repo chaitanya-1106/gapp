@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gapp | Bridge the Execution Gap</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        body { background-color: #020617; color: white; }
+        .gapp-card { background: #0f172a; border: 1px solid #1e293b; transition: all 0.3s ease; }
+        .gapp-card:hover { border-color: #f97316; }
+    </style>
+</head>
+<body class="p-4 md:p-12">
+
+    <nav class="flex justify-between items-center max-w-6xl mx-auto mb-16">
+        <h1 class="text-4xl font-black text-orange-500 italic tracking-tighter uppercase">gapp</h1>
+        <div class="flex items-center gap-3 bg-slate-900 border border-slate-800 px-6 py-2 rounded-full shadow-xl">
+            <i data-lucide="trending-up" class="text-orange-500 w-5 h-5"></i>
+            <span class="font-bold text-sm md:text-base">Reliability Score: <span id="score">100</span></span>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12">
+        <section>
+            <div class="gapp-card p-8 rounded-3xl shadow-2xl">
+                <h2 class="text-xl font-bold mb-6 flex items-center gap-2">
+                    <i data-lucide="zap" class="text-orange-500 w-5 h-5"></i> New Commitment
+                </h2>
+                <div class="space-y-4">
+                    <input id="taskTitle" type="text" placeholder="What is the intent?" 
+                        class="w-full bg-slate-950 border border-slate-700 p-4 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none">
+                    
+                    <select id="taskMethod" class="w-full bg-slate-950 border border-slate-700 p-4 rounded-xl outline-none cursor-pointer">
+                        <option>Deep Work Block (Calendar)</option>
+                        <option>Social Accountability (Public)</option>
+                        <option>Reputational Stake (Gapp Score)</option>
+                    </select>
+
+                    <button onclick="addCommitment()" class="w-full bg-orange-500 hover:bg-orange-600 text-black font-black py-4 rounded-xl transition-all active:scale-95 shadow-lg">
+                        LOCK COMMITMENT
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <h2 class="text-xl font-bold text-slate-400 mb-4">Execution Feed</h2>
+            <div id="commitmentList" class="space-y-4">
+                </div>
+        </section>
+    </main>
+
+    <script>
+        // SUPABASE CONFIG
+        const supabaseUrl = 'https://nqzbpwhsvygpdiysozgk.supabase.co';
+        const supabaseKey = 'sb_publishable_lwj7QYcRlfpdRWapIdntyg_nzEfxU7L';
+        const supabase = supabasejs.createClient(supabaseUrl, supabaseKey);
+
+        async function fetchCommitments() {
+            const { data, error } = await supabase.from('commitments').select('*').order('created_at', { ascending: false });
+            if (data) renderList(data);
+        }
+
+        async function addCommitment() {
+            const title = document.getElementById('taskTitle').value;
+            const method = document.getElementById('taskMethod').value;
+            if(!title) return;
+
+            const { error } = await supabase.from('commitments').insert([{ title, method, status: 'pending' }]);
+            if (!error) {
+                document.getElementById('taskTitle').value = '';
+                fetchCommitments();
+            }
+        }
+
+        async function updateStatus(id, newStatus) {
+            const { error } = await supabase.from('commitments').update({ status: newStatus }).eq('id', id);
+            if (!error) fetchCommitments();
+        }
+
+        function renderList(items) {
+            const list = document.getElementById('commitmentList');
+            const scoreDisplay = document.getElementById('score');
+            list.innerHTML = '';
+
+            items.forEach(c => {
+                const isGhosted = c.status === 'ghosted';
+                const isDone = c.status === 'completed';
+                
+                const div = document.createElement('div');
+                div.className = `p-6 rounded-2xl border flex justify-between items-center transition-all ${isGhosted ? 'bg-red-500/10 border-red-900/30 opacity-60' : 'bg-slate-900 border-slate-800'}`;
+                div.innerHTML = `
+                    <div>
+                        <h4 class="font-bold ${isDone ? 'line-through text-slate-500' : ''}">${c.title}</h4>
+                        <p class="text-xs text-slate-500 uppercase tracking-widest mt-1">${c.method}</p>
+                    </div>
+                    <div class="flex gap-4">
+                        <button onclick="updateStatus(${c.id}, 'completed')" class="text-slate-400 hover:text-green-500"><i data-lucide="check-circle"></i></button>
+                        <button onclick="updateStatus(${c.id}, 'ghosted')" class="text-slate-400 hover:text-red-500"><i data-lucide="x-circle"></i></button>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+
+            // Calculate Score
+            const total = items.length;
+            const completed = items.filter(c => c.status === 'completed').length;
+            scoreDisplay.innerText = total === 0 ? 100 : Math.round((completed / total) * 100);
+            lucide.createIcons();
+        }
+
+        // Initial Load
+        fetchCommitments();
+        lucide.createIcons();
+    </script>
+</body>
+</html>
