@@ -37,7 +37,8 @@
     box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
     width: 100%;
     min-height: 100vh;
     background: var(--bg-primary);
@@ -76,7 +77,7 @@ html, body {
     font-size: 28px;
     font-weight: 900;
     color: var(--accent);
-    text-transform: lowercase;
+    text-transform: uppercase;
     letter-spacing: -2px;
     font-style: italic;
     cursor: pointer;
@@ -196,10 +197,21 @@ html, body {
     letter-spacing: -1px;
 }
 
-.card-value.accent { color: var(--accent); }
-.card-value.success { color: var(--success); }
-.card-value.danger { color: var(--danger); }
-.card-value.warning { color: var(--warning); }
+.card-value.accent {
+    color: var(--accent);
+}
+
+.card-value.success {
+    color: var(--success);
+}
+
+.card-value.danger {
+    color: var(--danger);
+}
+
+.card-value.warning {
+    color: var(--warning);
+}
 
 /* =========================================
    Grid layouts
@@ -365,7 +377,7 @@ select.input {
     font-size: 48px;
     font-weight: 900;
     color: var(--accent);
-    text-transform: lowercase;
+    text-transform: uppercase;
     letter-spacing: -3px;
     font-style: italic;
     text-align: center;
@@ -446,9 +458,19 @@ select.input {
 }
 
 @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-6px); }
-    75% { transform: translateX(6px); }
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-6px);
+    }
+
+    75% {
+        transform: translateX(6px);
+    }
 }
 
 /* =========================================
@@ -657,6 +679,7 @@ select.input {
         opacity: 0;
         transform: translateY(10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -824,7 +847,9 @@ select.input {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* =========================================
@@ -863,13 +888,27 @@ select.input {
 }
 
 @keyframes toastIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @keyframes toastOut {
-    from { opacity: 1; transform: translateY(0); }
-    to { opacity: 0; transform: translateY(20px); }
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(20px);
+    }
 }
 
 /* =========================================
@@ -961,8 +1000,13 @@ select.input {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 .slide-up {
@@ -970,12 +1014,30 @@ select.input {
 }
 
 @keyframes slideUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Staggered animation delays for stat cards */
-.stats-grid > *:nth-child(1) { animation-delay: 0s; }
-.stats-grid > *:nth-child(2) { animation-delay: 0.1s; }
-.stats-grid > *:nth-child(3) { animation-delay: 0.15s; }
-.stats-grid > *:nth-child(4) { animation-delay: 0.2s; }
+.stats-grid>*:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.stats-grid>*:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.stats-grid>*:nth-child(3) {
+    animation-delay: 0.15s;
+}
+
+.stats-grid>*:nth-child(4) {
+    animation-delay: 0.2s;
+}

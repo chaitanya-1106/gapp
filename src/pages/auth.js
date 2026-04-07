@@ -8,7 +8,7 @@ export function renderAuthPage(container) {
     container.innerHTML = `
         <div class="auth-wrapper fade-in">
             <div class="auth-container">
-                <div class="auth-logo"><img src="/logo.png" alt="gapp" style="height: 48px; margin: 0 auto;"></div>
+                <div class="auth-logo">gapp</div>
                 <p class="auth-tagline">Bridge the Commitment–Execution Gap</p>
                 <div class="auth-card">
                     <div class="auth-tabs">
