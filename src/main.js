@@ -33,7 +33,7 @@ function renderNav(container, currentPath) {
 
   return `
         <nav class="nav">
-            <a class="nav-logo" href="#/dashboard">gapp</a>
+            <a class="nav-logo" href="#/dashboard"><img src="/logo.png" alt="gapp" style="height: 28px; width: auto;"></a>
             <div class="nav-links">
                 ${links.map(l => `
                     <a class="nav-link ${currentPath === l.path ? 'active' : ''}" href="#${l.path}">${l.label}</a>
