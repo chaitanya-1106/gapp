@@ -8,6 +8,7 @@ import { renderDashboardPage } from './pages/dashboard.js';
 import { renderCommitmentsPage } from './pages/commitments.js';
 import { renderLeaderboardPage } from './pages/leaderboard.js';
 import { renderAboutPage } from './pages/about.js';
+import { renderLandingPage } from './pages/landing.js';
 
 // ─── Toast notification system ───
 const toastContainer = document.createElement('div');
@@ -78,6 +79,15 @@ route('/auth', async (container) => {
     return;
   }
   renderAuthPage(container);
+});
+
+route('/', async (container) => {
+  const session = await getSession();
+  if (session) {
+    navigate('/dashboard');
+    return;
+  }
+  renderLandingPage(container);
 });
 
 route('/dashboard', authGuard('dashboard', renderDashboardPage));

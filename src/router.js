@@ -12,7 +12,7 @@ export function navigate(path) {
 
 export function startRouter() {
     const handleRoute = async () => {
-        const hash = window.location.hash.slice(1) || '/auth';
+        const hash = window.location.hash.slice(1) || '/';
         const app = document.getElementById('app');
 
         // Run cleanup of previous page
@@ -26,7 +26,7 @@ export function startRouter() {
             currentCleanup = await handler(app);
         } else {
             // Default to auth
-            navigate('/auth');
+            navigate('/');
         }
     };
 

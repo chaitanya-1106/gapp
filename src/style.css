@@ -1041,3 +1041,81 @@ select.input {
 .stats-grid>*:nth-child(4) {
     animation-delay: 0.2s;
 }
+
+/* =========================================
+   Landing Page
+   ========================================= */
+
+.landing-wrapper {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg-primary);
+}
+
+.landing-hero {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 120px 24px 60px;
+    z-index: 10;
+}
+
+.landing-content {
+    max-width: 900px;
+    width: 100%;
+    text-align: center;
+    position: relative;
+    z-index: 10;
+}
+
+.landing-title {
+    font-size: clamp(40px, 6vw, 72px);
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -2px;
+    margin-bottom: 24px;
+    color: var(--text);
+}
+
+.landing-subtitle {
+    font-size: clamp(16px, 2vw, 20px);
+    color: var(--text-muted);
+    max-width: 600px;
+    margin: 0 auto 48px;
+    line-height: 1.6;
+}
+
+.text-accent {
+    color: var(--accent);
+    position: relative;
+    display: inline-block;
+}
+
+.text-accent::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 30%;
+    background: var(--accent-glow-strong);
+    z-index: -1;
+    transform: skew(-10deg);
+}
+
+.landing-bg-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, rgba(255,107,44,0.15) 0%, rgba(10,10,15,0) 70%);
+    z-index: 0;
+    pointer-events: none;
+    border-radius: 50%;
+}

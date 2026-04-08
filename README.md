@@ -1,5 +1,7 @@
 # Gapp — Bridge the Commitment–Execution Gap
 
+**Live App**: [https://gapp-tracker.netlify.app/](https://gapp-tracker.netlify.app/)
+
 A modern web application that tracks commitment follow-through, assigns a personal reliability score (Gapp Score), and helps users close the Commitment–Execution Gap (CEG).
 
 ## 🚀 Features

@@ -10,7 +10,6 @@ redirects = []
 publish = "C:\\Users\\HP\\Downloads\\Gapp\\dist"
 publishOrigin = "ui"
 commandOrigin = "ui"
-base = "C:\\Users\\HP\\Downloads\\Gapp"
 command = "npm run build"
 
 [build.environment]
