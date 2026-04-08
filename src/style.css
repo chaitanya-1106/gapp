@@ -1051,7 +1051,7 @@ select.input {
     display: flex;
     flex-direction: column;
     position: relative;
-    overflow: hidden;
+    overflow-x: hidden;
     background: var(--bg-primary);
 }
 
