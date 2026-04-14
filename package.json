@@ -12,6 +12,20 @@
     "vite": "^8.0.4"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.102.1"
-  }
+    "@supabase/supabase-js": "^2.102.1",
+    "pptxgenjs": "^4.0.1"
+  },
+  "description": "**Live App**: [https://gapp-tracker.netlify.app/](https://gapp-tracker.netlify.app/)",
+  "main": "gapp_ppt.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chaitanya-1106/gapp.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/chaitanya-1106/gapp/issues"
+  },
+  "homepage": "https://github.com/chaitanya-1106/gapp#readme"
 }
