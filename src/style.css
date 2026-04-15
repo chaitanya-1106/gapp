@@ -1119,3 +1119,475 @@ select.input {
     pointer-events: none;
     border-radius: 50%;
 }
+
+/* =========================================
+   Login Modal (overlay on landing page)
+   Blue glow aesthetic
+   ========================================= */
+
+:root {
+    --modal-blue: #3B82F6;
+    --modal-blue-glow: rgba(59, 130, 246, 0.35);
+    --modal-blue-glow-soft: rgba(59, 130, 246, 0.12);
+    --modal-blue-border: rgba(59, 130, 246, 0.6);
+}
+
+/* Backdrop */
+.login-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(5, 5, 10, 0.75);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+.login-modal-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* Modal card */
+.login-modal {
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    background: #0d0d18;
+    border-radius: 24px;
+    padding: 44px 40px 40px;
+
+    /* Blue glow border */
+    border: 1px solid var(--modal-blue-border);
+    box-shadow:
+        0 0 0 1px var(--modal-blue-border),
+        0 0 40px var(--modal-blue-glow),
+        0 0 80px var(--modal-blue-glow-soft),
+        0 24px 60px rgba(0, 0, 0, 0.6);
+
+    /* Slide-up entrance */
+    transform: translateY(24px) scale(0.97);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
+    opacity: 0;
+
+    /* Pulsing blue aura */
+    animation: none;
+}
+
+.login-modal-overlay.active .login-modal {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    animation: modalBluePulse 3s ease-in-out infinite 0.3s;
+}
+
+@keyframes modalBluePulse {
+    0%, 100% {
+        box-shadow:
+            0 0 0 1px var(--modal-blue-border),
+            0 0 40px var(--modal-blue-glow),
+            0 0 80px var(--modal-blue-glow-soft),
+            0 24px 60px rgba(0, 0, 0, 0.6);
+    }
+    50% {
+        box-shadow:
+            0 0 0 1px rgba(59, 130, 246, 0.8),
+            0 0 60px rgba(59, 130, 246, 0.5),
+            0 0 120px rgba(59, 130, 246, 0.2),
+            0 24px 60px rgba(0, 0, 0, 0.6);
+    }
+}
+
+/* Close button */
+.login-modal-close {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+    color: var(--text-muted);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.login-modal-close:hover {
+    background: rgba(59, 130, 246, 0.15);
+    color: var(--modal-blue);
+    box-shadow: 0 0 12px var(--modal-blue-glow);
+}
+
+/* Override auth-tab active colour inside modal to blue */
+.login-modal .auth-tab.active {
+    background: var(--modal-blue);
+    color: #fff;
+    box-shadow: 0 0 16px var(--modal-blue-glow);
+}
+
+/* Input focus → blue ring inside modal */
+.login-modal .input:focus {
+    border-color: var(--modal-blue);
+    box-shadow: 0 0 0 3px var(--modal-blue-glow-soft);
+}
+
+/* Submit button → blue inside modal */
+.login-modal .btn-primary {
+    background: var(--modal-blue);
+    color: #fff;
+    margin-top: 4px;
+    box-shadow: 0 4px 20px var(--modal-blue-glow);
+    transition: var(--transition);
+}
+
+.login-modal .btn-primary:hover:not(:disabled) {
+    background: #2563EB;
+    box-shadow: 0 8px 32px rgba(59, 130, 246, 0.5);
+}
+
+.login-modal .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Thin blue accent line at the top of the card */
+.login-modal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--modal-blue), transparent);
+    border-radius: 0 0 4px 4px;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .login-modal {
+        padding: 36px 24px 32px;
+    }
+}
+
+/* =====================================================
+   WAVE 1 — Micro-animations, Toast v2, Check-in Modal
+   ===================================================== */
+
+/* ── Page entrance ── */
+@keyframes pageEnter {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.page.fade-in {
+    animation: pageEnter 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Commitment cards: slide from right, staggered ── */
+@keyframes cardSlideInRight {
+    from { opacity: 0; transform: translateX(24px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+/* Override existing slideIn with horizontal slide */
+.commitment-item {
+    animation: cardSlideInRight 0.3s ease both;
+}
+.commitment-item:nth-child(1)   { animation-delay: 0ms; }
+.commitment-item:nth-child(2)   { animation-delay: 50ms; }
+.commitment-item:nth-child(3)   { animation-delay: 100ms; }
+.commitment-item:nth-child(4)   { animation-delay: 150ms; }
+.commitment-item:nth-child(5)   { animation-delay: 200ms; }
+.commitment-item:nth-child(n+6) { animation-delay: 250ms; }
+
+/* ── Ghost shake on mark ── */
+@keyframes ghostShake {
+    0%, 100% { transform: translateX(0); }
+    15%  { transform: translateX(-10px); background: rgba(239, 68, 68, 0.12); }
+    30%  { transform: translateX(10px); }
+    45%  { transform: translateX(-6px); }
+    60%  { transform: translateX(6px); }
+    80%  { transform: translateX(-3px); }
+}
+.commitment-item.ghost-shake-anim {
+    animation: ghostShake 0.5s ease !important;
+}
+
+/* ── Button press enhancement ── */
+.btn:active {
+    transform: scale(0.96) !important;
+    box-shadow: none !important;
+}
+
+/* ── Score ring: remove old orange filter, glow handled per-tier ── */
+.score-ring-progress {
+    filter: none;
+}
+
+/* ── Score ring glow pulses per tier ── */
+@keyframes glowGreen {
+    0%, 100% { filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.3)); }
+    50%       { filter: drop-shadow(0 0 28px rgba(34, 197, 94, 0.9)); }
+}
+@keyframes glowOrange {
+    0%, 100% { filter: drop-shadow(0 0 6px rgba(249, 115, 22, 0.3)); }
+    50%       { filter: drop-shadow(0 0 28px rgba(249, 115, 22, 0.9)); }
+}
+@keyframes glowRed {
+    0%, 100% { filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.3)); }
+    50%       { filter: drop-shadow(0 0 28px rgba(239, 68, 68, 0.9)); }
+}
+.ring-glow-elite   { animation: glowGreen  2.5s ease-in-out infinite; }
+.ring-glow-ontrack { animation: glowOrange 2.5s ease-in-out infinite; }
+.ring-glow-atrisk  { animation: glowRed    2.5s ease-in-out infinite; }
+
+/* ── Streak flame pulse ── */
+@keyframes flamePulse {
+    0%, 100% { transform: scale(1); }
+    50%       { transform: scale(1.25); }
+}
+.streak-flame {
+    display: inline-block;
+    animation: flamePulse 1.4s ease-in-out infinite;
+}
+
+/* ── CEG Breakdown Bar ── */
+.ceg-bar-wrap {
+    height: 40px;
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    margin: 16px 0;
+}
+.ceg-seg {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0%;
+}
+.ceg-seg-done    { background: linear-gradient(90deg, #16a34a, #22c55e); color: #fff; }
+.ceg-seg-pending { background: rgba(249, 115, 22, 0.25); color: #f97316; border-left: 1px solid rgba(249, 115, 22, 0.4); }
+.ceg-seg-ghosted { background: linear-gradient(90deg, #dc2626, #ef4444); color: #fff; border-left: 1px solid rgba(239, 68, 68, 0.4); }
+
+/* ── Enhanced Toast v2 ── */
+.toast-container-v2 {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 10px;
+    width: 340px;
+    max-width: calc(100vw - 48px);
+    pointer-events: none;
+}
+.toast-v2 {
+    border-radius: 14px;
+    overflow: hidden;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    transform: translateX(380px);
+    opacity: 0;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+    pointer-events: all;
+    background: rgba(10, 10, 20, 0.95);
+    backdrop-filter: blur(8px);
+}
+.toast-v2.toast-enter {
+    transform: translateX(0);
+    opacity: 1;
+}
+.toast-v2.toast-exit {
+    transform: translateX(380px);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+.toast-v2-body {
+    padding: 14px 18px 12px;
+    line-height: 1.5;
+    color: var(--text);
+}
+.toast-v2-progress {
+    height: 3px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.08);
+}
+.toast-v2-bar {
+    height: 100%;
+    width: 100%;
+    transition: none;
+}
+/* success */
+.toast-v2.t-success { border: 1px solid rgba(34, 197, 94, 0.35); }
+.toast-v2.t-success .toast-v2-bar { background: #22c55e; }
+/* error */
+.toast-v2.t-error   { border: 1px solid rgba(239, 68, 68, 0.35); }
+.toast-v2.t-error .toast-v2-bar { background: #ef4444; }
+/* warning / streak */
+.toast-v2.t-warning { border: 1px solid rgba(249, 115, 22, 0.35); }
+.toast-v2.t-warning .toast-v2-bar { background: #f97316; }
+/* tier unlock — gold + larger */
+.toast-v2.t-tier {
+    border: 1px solid rgba(234, 179, 8, 0.5);
+    box-shadow: 0 8px 40px rgba(234, 179, 8, 0.2), 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+.toast-v2.t-tier .toast-v2-body { font-size: 16px; font-weight: 700; padding: 18px 22px 14px; }
+.toast-v2.t-tier .toast-v2-bar  { background: #eab308; }
+
+/* ── Daily Check-in Modal ── */
+.checkin-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1100;
+    background: rgba(0, 0, 0, 0.78);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.25s ease;
+}
+.checkin-modal {
+    background: #0d0d18;
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 88vh;
+    overflow-y: auto;
+    padding: 32px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+    animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.checkin-score-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-weight: 800;
+    font-size: 16px;
+    background: var(--accent-glow);
+    border: 1px solid var(--accent-glow-strong);
+    color: var(--accent);
+    transition: all 0.4s ease;
+}
+.checkin-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px;
+    margin-bottom: 10px;
+    transition: all 0.35s ease;
+}
+.checkin-item.done-state {
+    border-color: rgba(34, 197, 94, 0.5);
+    background: rgba(34, 197, 94, 0.06);
+}
+.checkin-item.ghost-state {
+    border-color: rgba(239, 68, 68, 0.5);
+    background: rgba(239, 68, 68, 0.06);
+}
+.checkin-item-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 10px;
+}
+.checkin-btns {
+    display: flex;
+    gap: 8px;
+}
+.checkin-btn {
+    flex: 1;
+    padding: 10px 12px;
+    border: 1px solid;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+.checkin-btn:disabled          { opacity: 0.35; cursor: not-allowed; }
+.checkin-btn:active:not(:disabled) { transform: scale(0.96); }
+.checkin-btn-done {
+    background: rgba(34, 197, 94, 0.1);
+    border-color: rgba(34, 197, 94, 0.3);
+    color: #22c55e;
+}
+.checkin-btn-done:hover:not(:disabled) {
+    background: rgba(34, 197, 94, 0.2);
+    box-shadow: 0 0 16px rgba(34, 197, 94, 0.2);
+}
+.checkin-btn-ghost {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+}
+.checkin-btn-ghost:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.2);
+    box-shadow: 0 0 16px rgba(239, 68, 68, 0.2);
+}
+.checkin-footer {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+}
+.btn-dismiss-checkin {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 10px 28px;
+    border-radius: 50px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+}
+.btn-dismiss-checkin:hover {
+    color: var(--text);
+    border-color: var(--border-hover);
+}
+
+/* ── Responsive tweaks ── */
+@media (max-width: 640px) {
+    .checkin-modal { padding: 24px 20px; }
+    .toast-container-v2 { width: calc(100vw - 32px); right: 16px; bottom: 16px; }
+}
+
+/* ── prefers-reduced-motion ── */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
