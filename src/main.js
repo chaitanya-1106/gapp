@@ -75,26 +75,26 @@ function dismissToast(toast) {
     setTimeout(() => toast.remove(), 350);
 }
 
-// ─── Render navigation shell ───────────────────────────────────────
+// ─── Render navigation shell (floating island) ──────────────────────
 function renderNav(container, currentPath) {
     const links = [
         { path: '/dashboard',   label: 'Dashboard' },
         { path: '/commitments', label: 'Commitments' },
-        { path: '/leaderboard', label: 'Leaderboard' },
+        { path: '/leaderboard', label: 'Rankings' },
         { path: '/about',       label: 'About CEG' },
     ];
 
     return `
-        <nav class="nav">
-            <a class="nav-logo" href="#/dashboard">
-                <img src="/logo.png" alt="gapp" style="height: 32px; width: auto; border-radius: 4px;">
+        <nav class="nav" id="main-nav" role="navigation" aria-label="Main navigation">
+            <a class="nav-logo" href="#/dashboard" aria-label="GAPP home">
+                <img src="/gapp_logo.png" alt="GAPP" class="nav-logo-img" />
             </a>
             <div class="nav-links">
                 ${links.map(l => `
                     <a class="nav-link ${currentPath === l.path ? 'active' : ''}" href="#${l.path}">${l.label}</a>
                 `).join('')}
-                <button class="nav-link signout" id="signout-btn">Sign Out</button>
             </div>
+            <button class="nav-link signout" id="signout-btn" aria-label="Sign out">Sign Out</button>
         </nav>
     `;
 }
@@ -149,3 +149,28 @@ supabase.auth.onAuthStateChange((event, session) => {
 
 // ─── Start the app ─────────────────────────────────────────────────
 startRouter();
+
+// ─── Floating nav scroll lensing ─────────────────────────────────────
+// Compresses the island on scroll — Lensing effect
+(function initNavLensing() {
+    let lastY = 0;
+    let ticking = false;
+
+    window.addEventListener('scroll', () => {
+        lastY = window.scrollY;
+        if (!ticking) {
+            requestAnimationFrame(() => {
+                const nav = document.getElementById('main-nav');
+                if (nav) {
+                    if (lastY > 40) {
+                        nav.classList.add('nav-compact');
+                    } else {
+                        nav.classList.remove('nav-compact');
+                    }
+                }
+                ticking = false;
+            });
+            ticking = true;
+        }
+    }, { passive: true });
+}());

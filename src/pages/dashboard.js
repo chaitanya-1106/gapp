@@ -1,40 +1,18 @@
-// Dashboard Page — Score Ring, CEG Chart, Daily Check-in Modal
+// Dashboard Page — Neural Accountability Terminal
 import { supabase } from '../supabase.js';
 import { getUser } from '../auth.js';
 import { showToast } from '../main.js';
 
 // ─── Tier helpers ──────────────────────────────────────────────────
 function getTier(score) {
-    if (score >= 90) return {
-        name:      'Elite',
-        emoji:     '🏆',
-        class:     'tier-elite',
-        glowClass: 'ring-glow-elite',
-        color:     '#22c55e',
-        hint:      'You\'re Elite. Stay consistent to hold your rank.',
-    };
-    if (score >= 60) return {
-        name:      'On Track',
-        emoji:     '✅',
-        class:     'tier-ontrack',
-        glowClass: 'ring-glow-ontrack',
-        color:     '#f97316',
-        hint:      `${90 - score} pts to reach Elite tier`,
-    };
-    return {
-        name:      'At Risk',
-        emoji:     '⚠️',
-        class:     'tier-atrisk',
-        glowClass: 'ring-glow-atrisk',
-        color:     '#ef4444',
-        hint:      `${60 - score} pts needed to reach On Track`,
-    };
+    if (score >= 90) return { name: 'Elite',    cls: 'elite',   glowCls: 'elite',   color: '#16a34a' };
+    if (score >= 60) return { name: 'On Track', cls: 'ontrack', glowCls: 'ontrack', color: '#f97316' };
+    return              { name: 'At Risk',  cls: 'atrisk',  glowCls: 'atrisk',  color: '#dc2626' };
 }
-
 function getTierLabel(score) {
-    if (score >= 90) return 'Elite 🏆';
-    if (score >= 60) return 'On Track ✅';
-    return 'At Risk ⚠️';
+    if (score >= 90) return 'Elite';
+    if (score >= 60) return 'On Track';
+    return 'At Risk';
 }
 
 // ─── Number counter animation ──────────────────────────────────────
@@ -43,7 +21,7 @@ function animateValue(el, start, end, duration) {
     const startTime = performance.now();
     function update(now) {
         const progress = Math.min((now - startTime) / duration, 1);
-        const eased    = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+        const eased    = 1 - Math.pow(1 - progress, 3);
         el.textContent = Math.round(start + range * eased);
         if (progress < 1) requestAnimationFrame(update);
     }
@@ -70,7 +48,7 @@ export async function renderDashboardPage(container) {
         .single();
 
     if (error || !profile) {
-        container.innerHTML = `<div class="page"><p style="color:var(--text-muted)">Could not load profile. Please try again.</p></div>`;
+        container.innerHTML = `<div class="page"><p style="color:var(--text-secondary);font-family:var(--font-mono)">Could not load profile. Please try again.</p></div>`;
         return;
     }
 
@@ -83,145 +61,103 @@ export async function renderDashboardPage(container) {
     const rate     = total === 0 ? 100 : Math.round((executed / total) * 100);
     const tier     = getTier(score);
 
-    // SVG ring math
-    const CIRCUMFERENCE = 2 * Math.PI * 90; // r=90
-    const displayScore  = Math.max(0, Math.min(200, score));
-    const ringOffset    = CIRCUMFERENCE * (1 - displayScore / 200);
-
-    // CEG bar percentages
-    const execPct  = total === 0 ? 0  : Math.round((executed / total) * 100);
-    const pendPct  = total === 0 ? 100 : Math.round((pending  / total) * 100);
-    const ghostPct = total === 0 ? 0  : Math.round((ghosted  / total) * 100);
+    // Rate bar color
+    const rateColor = rate >= 75 ? 'var(--green)' : rate >= 50 ? 'var(--orange)' : 'var(--red)';
+    const hintText  = score >= 90
+        ? 'You\'re Elite. Stay consistent.'
+        : score >= 60
+        ? `${90 - score} pts to Elite`
+        : `${60 - score} pts to On Track`;
 
     container.innerHTML = `
         <div class="page fade-in">
 
-            <!-- Page header with streak badge -->
-            <div class="page-header" style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
+            <!-- Page header -->
+            <div class="page-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
                 <div>
                     <h1 class="page-title">Dashboard</h1>
-                    <p class="page-subtitle">Welcome back, <strong style="color:var(--text)">${escapeHtml(profile.username || 'User')}</strong>. Here's your commitment overview.</p>
+                    <p class="page-subtitle">// ${escapeHtml(profile.username || user.email)} &nbsp;·&nbsp; reliability terminal</p>
                 </div>
                 ${streak > 0 ? `
-                <div style="display:flex; align-items:center; gap:8px; background:rgba(249,115,22,0.1); border:1px solid rgba(249,115,22,0.3); border-radius:50px; padding:8px 18px; align-self:center;">
-                    <span class="streak-flame" style="font-size:20px;">🔥</span>
-                    <span style="font-weight:800; color:#f97316; font-size:16px;">${streak}</span>
-                    <span style="font-size:12px; color:var(--text-muted); font-weight:500;">day streak</span>
+                <div style="display:flex; align-items:center; gap:8px; border:1px solid rgba(249,115,22,0.35); padding:6px 14px;">
+                    <span class="streak-flame" style="font-size:16px;">🔥</span>
+                    <span style="font-family:var(--font-display); font-size:22px; color:var(--orange);">${streak}</span>
+                    <span style="font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:0.12em; color:var(--text-secondary);">day streak</span>
                 </div>` : ''}
             </div>
 
-            <div class="two-col">
+            <!-- Main dashboard grid -->
+            <div class="dash-grid">
 
-                <!-- ── Score Ring Card ── -->
-                <div class="card card-glow" style="position:relative; overflow:hidden;">
-                    <div class="score-ring-container">
-                        <div class="score-ring-wrapper">
-                            <!-- Apply tier glow animation to the SVG element itself -->
-                            <svg class="score-ring-svg ${tier.glowClass}" viewBox="0 0 200 200">
-                                <circle class="score-ring-bg" cx="100" cy="100" r="90" />
-                                <circle
-                                    class="score-ring-progress"
-                                    cx="100" cy="100" r="90"
-                                    id="score-progress"
-                                    style="
-                                        stroke: ${tier.color};
-                                        stroke-dasharray: ${CIRCUMFERENCE};
-                                        stroke-dashoffset: ${CIRCUMFERENCE};
-                                        transition: stroke-dashoffset 1.4s cubic-bezier(0.4, 0, 0.2, 1);
-                                    "
-                                />
-                            </svg>
-                            <div class="score-ring-text">
-                                <div class="score-ring-value" id="score-value">0</div>
-                                <div class="score-ring-label">Gapp Score</div>
-                            </div>
-                        </div>
+                <!-- LEFT: Score column -->
+                <div class="dash-score-col">
+                    <!-- Glow blob -->
+                    <div class="score-glow-blob" style="background: radial-gradient(circle at center, ${tier.color}14 0%, transparent 65%);"></div>
 
-                        <div class="tier-badge ${tier.class}" style="margin-top:12px;">
-                            ${tier.emoji} ${tier.name}
-                        </div>
+                    <!-- Giant score number -->
+                    <div class="score-giant ${tier.cls}" id="score-giant">0</div>
 
-                        <!-- Progress hint -->
-                        <div style="margin-top:14px; font-size:12px; color:var(--text-dim); text-align:center; padding:0 8px;">
-                            ${tier.hint}
-                        </div>
-                    </div>
+                    <div class="score-label">Gapp Score</div>
 
-                    <!-- Decorative radial blob -->
-                    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:220px; height:220px; background:radial-gradient(circle, ${tier.color}18 0%, transparent 70%); pointer-events:none; border-radius:50%; z-index:0;"></div>
+                    <div class="tier-pill ${tier.cls}">${tier.name}</div>
+
+                    <div class="score-hint">${hintText}</div>
                 </div>
 
-                <!-- ── Right column ── -->
-                <div>
+                <!-- RIGHT: Stats + charts -->
+                <div class="dash-stats-col">
 
-                    <!-- Stat cards -->
-                    <div class="stats-grid">
-                        <div class="card slide-up">
-                            <div class="card-title">Total</div>
-                            <div class="card-value accent">${total}</div>
+                    <!-- 2×2 Stat cards -->
+                    <div class="stat-cards-grid">
+                        <!-- Total -->
+                        <div class="stat-card">
+                            <div class="stat-label">Total</div>
+                            <div class="stat-number" id="s-total">0</div>
+                            <div class="stat-bar"><div class="stat-bar-fill orange" id="sb-total" style="width:0%"></div></div>
                         </div>
-                        <div class="card slide-up">
-                            <div class="card-title">Executed</div>
-                            <div class="card-value success">${executed}</div>
+                        <!-- Executed -->
+                        <div class="stat-card">
+                            <div class="stat-label">Executed</div>
+                            <div class="stat-number green" id="s-exec">0</div>
+                            <div class="stat-bar"><div class="stat-bar-fill green" id="sb-exec" style="width:0%"></div></div>
                         </div>
-                        <div class="card slide-up">
-                            <div class="card-title">Ghosted</div>
-                            <div class="card-value danger">${ghosted}</div>
+                        <!-- Ghosted -->
+                        <div class="stat-card">
+                            <div class="stat-label">Ghosted</div>
+                            <div class="stat-number red" id="s-ghost">0</div>
+                            <div class="stat-bar"><div class="stat-bar-fill red" id="sb-ghost" style="width:0%"></div></div>
                         </div>
-                        <div class="card slide-up">
-                            <div class="card-title">Exec Rate</div>
-                            <div class="card-value" style="color:${rate >= 75 ? 'var(--success)' : rate >= 50 ? 'var(--warning)' : 'var(--danger)'}">${rate}%</div>
+                        <!-- Pending -->
+                        <div class="stat-card">
+                            <div class="stat-label">Pending</div>
+                            <div class="stat-number" id="s-pend">0</div>
+                            <div class="stat-bar"><div class="stat-bar-fill orange" id="sb-pend" style="width:0%"></div></div>
                         </div>
                     </div>
 
-                    <!-- CEG Breakdown Bar -->
-                    <div class="card" style="margin-top:8px;">
-                        <div class="card-title" style="margin-bottom:4px;">CEG Breakdown</div>
-                        <div style="font-size:12px; color:var(--text-dim); margin-bottom:8px;">Commitment execution distribution</div>
-
-                        ${total === 0
-                            ? `<div style="text-align:center; padding:16px; color:var(--text-dim); font-size:13px;">
-                                No commitments yet.
-                                <a href="#/commitments" style="color:var(--accent); text-decoration:none;">Add your first →</a>
-                              </div>`
-                            : `<div class="ceg-bar-wrap">
-                                <div class="ceg-seg ceg-seg-done"    id="ceg-done"  style="width:0%"></div>
-                                <div class="ceg-seg ceg-seg-pending" id="ceg-pend"  style="width:0%"></div>
-                                <div class="ceg-seg ceg-seg-ghosted" id="ceg-ghost" style="width:0%"></div>
-                               </div>
-                               <div style="display:flex; gap:16px; flex-wrap:wrap; margin-top:4px;">
-                                   <div style="display:flex; align-items:center; gap:5px; font-size:12px;">
-                                       <div style="width:10px;height:10px;border-radius:2px;background:#22c55e;flex-shrink:0;"></div>
-                                       <span style="color:var(--text-muted);">Done <strong style="color:var(--text)">${executed} (${execPct}%)</strong></span>
-                                   </div>
-                                   <div style="display:flex; align-items:center; gap:5px; font-size:12px;">
-                                       <div style="width:10px;height:10px;border-radius:2px;background:rgba(249,115,22,0.5);border:1px solid #f97316;flex-shrink:0;"></div>
-                                       <span style="color:var(--text-muted);">Pending <strong style="color:var(--text)">${pending} (${pendPct}%)</strong></span>
-                                   </div>
-                                   <div style="display:flex; align-items:center; gap:5px; font-size:12px;">
-                                       <div style="width:10px;height:10px;border-radius:2px;background:#ef4444;flex-shrink:0;"></div>
-                                       <span style="color:var(--text-muted);">Ghosted <strong style="color:var(--text)">${ghosted} (${ghostPct}%)</strong></span>
-                                   </div>
-                               </div>`
-                        }
+                    <!-- Execution rate bar -->
+                    <div class="exec-rate-section">
+                        <div class="exec-rate-header">
+                            <span class="exec-rate-label">Execution Rate</span>
+                            <span class="exec-rate-value" style="color:${rateColor}" id="s-rate">0%</span>
+                        </div>
+                        <div class="exec-rate-track">
+                            <div class="exec-rate-fill" id="sb-rate" style="background:${rateColor}; width:0%;"></div>
+                        </div>
                     </div>
 
-                    <!-- Scoring rules reference -->
-                    <div class="card" style="margin-top:8px;">
-                        <div class="card-title">Scoring</div>
-                        <div style="display:flex; gap:24px; margin-top:12px; flex-wrap:wrap; align-items:center;">
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <span style="color:var(--success); font-weight:800; font-size:18px;">+5</span>
-                                <span style="color:var(--text-muted); font-size:13px;">per executed</span>
-                            </div>
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <span style="color:var(--danger); font-weight:800; font-size:18px;">−10</span>
-                                <span style="color:var(--text-muted); font-size:13px;">per ghosted</span>
-                            </div>
-                            <div style="display:flex; align-items:center; gap:8px;">
-                                <span style="color:var(--accent); font-weight:800; font-size:18px;">100</span>
-                                <span style="color:var(--text-muted); font-size:13px;">start</span>
-                            </div>
+                    <!-- Scoring rules -->
+                    <div style="padding:16px 20px; border-top:1px solid var(--bg-border); display:flex; gap:32px; align-items:center; flex-wrap:wrap;">
+                        <div>
+                            <span style="font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:0.15em; color:var(--text-secondary);">Scoring</span>
+                        </div>
+                        <div style="display:flex; gap:24px; flex-wrap:wrap;">
+                            <span style="font-family:var(--font-display); font-size:22px; color:var(--green);">+5</span>
+                            <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); align-self:center;">executed</span>
+                            <span style="font-family:var(--font-display); font-size:22px; color:var(--red);">-10</span>
+                            <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); align-self:center;">ghosted</span>
+                            <span style="font-family:var(--font-display); font-size:22px; color:var(--orange);">100</span>
+                            <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); align-self:center;">start</span>
                         </div>
                     </div>
 
@@ -230,43 +166,60 @@ export async function renderDashboardPage(container) {
         </div>
     `;
 
-    // ── Animate score ring + counter ──────────────────────────────
+    // ── Animate stats ──
     requestAnimationFrame(() => {
         setTimeout(() => {
-            const ring = document.getElementById('score-progress');
-            if (ring) ring.style.strokeDashoffset = ringOffset;
+            // Score counter
+            const scoreEl = document.getElementById('score-giant');
+            if (scoreEl) animateValue(scoreEl, 0, score, 1000);
 
-            const valueEl = document.getElementById('score-value');
-            if (valueEl) animateValue(valueEl, 0, score, 1300);
+            // Other counters
+            const totalEl = document.getElementById('s-total');
+            const execEl  = document.getElementById('s-exec');
+            const ghostEl = document.getElementById('s-ghost');
+            const pendEl  = document.getElementById('s-pend');
+            const rateEl  = document.getElementById('s-rate');
+
+            if (totalEl) animateValue(totalEl, 0, total, 800);
+            if (execEl)  animateValue(execEl,  0, executed, 800);
+            if (ghostEl) animateValue(ghostEl, 0, ghosted, 800);
+            if (pendEl)  animateValue(pendEl,  0, pending, 800);
+            if (rateEl)  {
+                let start = performance.now();
+                const dur = 1000;
+                const animate = (now) => {
+                    const p = Math.min((now - start) / dur, 1);
+                    rateEl.textContent = Math.round(rate * (1 - Math.pow(1 - p, 3))) + '%';
+                    if (p < 1) requestAnimationFrame(animate);
+                };
+                requestAnimationFrame(animate);
+            }
+
+            // Stat bars
+            const barTotal = document.getElementById('sb-total');
+            const barExec  = document.getElementById('sb-exec');
+            const barGhost = document.getElementById('sb-ghost');
+            const barPend  = document.getElementById('sb-pend');
+            const barRate  = document.getElementById('sb-rate');
+
+            if (total > 0) {
+                if (barTotal) { barTotal.style.transition = 'width 1s ease-out'; barTotal.style.width = '100%'; }
+                if (barExec)  { barExec.style.transition  = 'width 1s ease-out'; barExec.style.width  = Math.round((executed / total) * 100) + '%'; }
+                if (barGhost) { barGhost.style.transition = 'width 1s ease-out'; barGhost.style.width = Math.round((ghosted / total) * 100) + '%'; }
+                if (barPend)  { barPend.style.transition  = 'width 1s ease-out'; barPend.style.width  = Math.round((pending / total) * 100) + '%'; }
+            }
+            if (barRate) { barRate.style.transition = 'width 1s ease-out'; barRate.style.width = rate + '%'; }
+
         }, 120);
-
-        // ── Animate CEG bar segments ──
-        if (total > 0) {
-            setTimeout(() => {
-                const doneEl  = document.getElementById('ceg-done');
-                const pendEl  = document.getElementById('ceg-pend');
-                const ghostEl = document.getElementById('ceg-ghost');
-                if (doneEl)  doneEl.style.width  = execPct  + '%';
-                if (pendEl)  pendEl.style.width  = pendPct  + '%';
-                if (ghostEl) ghostEl.style.width = ghostPct + '%';
-
-                // Add percentage labels after bar finishes animating
-                setTimeout(() => {
-                    if (doneEl  && execPct  > 12) doneEl.textContent  = execPct  + '%';
-                    if (pendEl  && pendPct  > 12) pendEl.textContent  = pendPct  + '%';
-                    if (ghostEl && ghostPct > 12) ghostEl.textContent = ghostPct + '%';
-                }, 900);
-            }, 200);
-        }
     });
 
-    // ── Daily check-in modal ──────────────────────────────────────
+    // ── Daily check-in ──
     await maybeShowCheckinModal(user.id, score);
 }
 
-// ─── Check-in modal orchestration ─────────────────────────────────
+// ─── Check-in modal ────────────────────────────────────────────────
 async function maybeShowCheckinModal(userId, currentScore) {
-    const today      = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
+    const today      = new Date().toLocaleDateString('en-CA');
     const lastCheckin = localStorage.getItem('gapp_last_checkin');
     if (lastCheckin === today) return;
 
@@ -290,101 +243,88 @@ function renderCheckinModal(commitments, currentScore, userId) {
     let liveScore  = currentScore;
     let actedCount = 0;
     const total    = commitments.length;
-    // Track per-item state: null | 'done' | 'ghost'
     const stateMap = Object.fromEntries(commitments.map(c => [c.id, null]));
+
+    function getTierColor(s) {
+        return s >= 90 ? 'var(--green)' : s >= 60 ? 'var(--orange)' : 'var(--red)';
+    }
+    function getTierName(s) {
+        if (s >= 90) return 'ELITE';
+        if (s >= 60) return 'ON TRACK';
+        return 'AT RISK';
+    }
 
     const overlay = document.createElement('div');
     overlay.className = 'checkin-overlay';
+    overlay.innerHTML = `
+        <div class="checkin-modal">
+            <div style="margin-bottom:16px;">
+                <h2 style="font-family:var(--font-heading); font-size:18px; font-weight:700; color:var(--text-primary); margin-bottom:4px;">Daily Check-In</h2>
+                <p style="font-family:var(--font-mono); font-size:11px; color:var(--text-secondary);">// ${total} commitment${total > 1 ? 's' : ''} awaiting resolution</p>
+            </div>
 
-    function getTierColor(s) {
-        return s >= 90 ? '#22c55e' : s >= 60 ? '#f97316' : '#ef4444';
-    }
-
-    function buildModal() {
-        return `
-            <div class="checkin-modal">
-                <!-- Header -->
-                <div style="margin-bottom:20px;">
-                    <h2 style="font-size:20px; font-weight:800; color:var(--text); margin-bottom:6px;">☀️ Daily Check-in</h2>
-                    <p style="font-size:13px; color:var(--text-muted);">
-                        You have <strong>${total}</strong> pending commitment${total > 1 ? 's' : ''}. How did it go?
-                    </p>
-                </div>
-
-                <!-- Live score pill -->
-                <div style="text-align:center; margin-bottom:24px;">
-                    <div class="checkin-score-pill" id="checkin-pill">
-                        <span style="font-size:13px; font-weight:500; opacity:0.75;">Score</span>
-                        <strong id="ci-score">${liveScore}</strong>
-                        <span id="ci-tier" style="font-size:12px; opacity:0.8;">${getTierLabel(liveScore)}</span>
-                    </div>
-                </div>
-
-                <!-- Commitment items -->
-                <div id="checkin-items">
-                    ${commitments.map(c => `
-                        <div class="checkin-item" id="ci-${c.id}">
-                            <div class="checkin-item-title">${escapeHtml(c.title)}</div>
-                            ${c.implementation_intention
-                                ? `<div style="font-size:12px; color:var(--text-muted); font-style:italic; margin-bottom:10px;">&ldquo;${escapeHtml(c.implementation_intention)}&rdquo;</div>`
-                                : ''}
-                            <div class="checkin-btns">
-                                <button class="checkin-btn checkin-btn-done"  data-id="${c.id}" data-act="done">
-                                    ✓ Done <span style="font-size:11px; opacity:0.75;">+5</span>
-                                </button>
-                                <button class="checkin-btn checkin-btn-ghost" data-id="${c.id}" data-act="ghost">
-                                    ✗ Ghost <span style="font-size:11px; opacity:0.75;">−10</span>
-                                </button>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-
-                <div class="checkin-footer">
-                    <button class="btn-dismiss-checkin" id="checkin-dismiss">Remind me later</button>
+            <div style="text-align:center; margin-bottom:20px;">
+                <div class="checkin-score-pill" id="ci-pill">
+                    <span style="font-size:11px; opacity:0.65; text-transform:uppercase; letter-spacing:0.1em;">Score</span>
+                    <strong id="ci-score" style="font-family:var(--font-display); font-size:20px; letter-spacing:0.04em;">${liveScore}</strong>
+                    <span id="ci-tier" style="font-size:10px; opacity:0.75; text-transform:uppercase; letter-spacing:0.1em;">${getTierName(liveScore)}</span>
                 </div>
             </div>
-        `;
-    }
 
-    overlay.innerHTML = buildModal();
+            <div id="ci-items">
+                ${commitments.map(c => `
+                    <div class="checkin-item" id="ci-${c.id}">
+                        <div class="checkin-item-title">${escapeHtml(c.title)}</div>
+                        ${c.implementation_intention ? `<div style="font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); font-style:italic; margin-bottom:10px;">&ldquo;${escapeHtml(c.implementation_intention)}&rdquo;</div>` : ''}
+                        <div class="checkin-btns">
+                            <button class="checkin-btn checkin-btn-done"  data-id="${c.id}" data-act="done">✓ Execute &nbsp;<span style="opacity:0.6; font-size:10px;">+5</span></button>
+                            <button class="checkin-btn checkin-btn-ghost" data-id="${c.id}" data-act="ghost">✗ Ghost &nbsp;<span style="opacity:0.6; font-size:10px;">−10</span></button>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+
+            <div class="checkin-footer">
+                <button class="btn-dismiss-checkin" id="ci-dismiss">Remind me later</button>
+            </div>
+        </div>
+    `;
+
     document.body.appendChild(overlay);
     document.body.style.overflow = 'hidden';
 
-    // Sync live score pill UI
-    function syncScorePill() {
+    function syncPill() {
         const numEl  = overlay.querySelector('#ci-score');
         const tierEl = overlay.querySelector('#ci-tier');
-        const pill   = overlay.querySelector('#checkin-pill');
+        const pill   = overlay.querySelector('#ci-pill');
         if (numEl)  numEl.textContent  = liveScore;
-        if (tierEl) tierEl.textContent = getTierLabel(liveScore);
+        if (tierEl) tierEl.textContent = getTierName(liveScore);
         if (pill) {
-            const c = getTierColor(liveScore);
-            pill.style.color       = c;
-            pill.style.borderColor = c + '66';
-            pill.style.background  = c + '18';
+            const c = getTierColor(liveScore).replace('var(', '').replace(')', '');
+            pill.style.borderColor = getTierColor(liveScore).includes('green')
+                ? 'rgba(22,163,74,0.4)' : getTierColor(liveScore).includes('orange')
+                ? 'rgba(249,115,22,0.4)' : 'rgba(220,38,38,0.4)';
+            pill.style.color = getTierColor(liveScore);
         }
     }
 
     function closeModal() {
         overlay.style.opacity   = '0';
-        overlay.style.transition = 'opacity 0.3s ease';
+        overlay.style.transition = 'opacity 0.2s ease';
         document.body.style.overflow = '';
         localStorage.setItem('gapp_last_checkin', new Date().toLocaleDateString('en-CA'));
-        setTimeout(() => overlay.remove(), 320);
+        setTimeout(() => overlay.remove(), 250);
     }
 
-    // ── Action buttons ──
     overlay.querySelectorAll('.checkin-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
             const id     = btn.dataset.id;
-            const action = btn.dataset.act; // 'done' | 'ghost'
+            const action = btn.dataset.act;
             if (stateMap[id] !== null) return;
 
             stateMap[id] = action;
             actedCount++;
 
-            // Optimistic UI
             const itemEl = overlay.querySelector(`#ci-${id}`);
             if (itemEl) {
                 itemEl.classList.add(action === 'done' ? 'done-state' : 'ghost-state');
@@ -393,12 +333,10 @@ function renderCheckinModal(commitments, currentScore, userId) {
 
             const delta = action === 'done' ? 5 : -10;
             liveScore += delta;
-            syncScorePill();
+            syncPill();
 
-            // Supabase write
             try {
                 const newStatus = action === 'done' ? 'completed' : 'ghosted';
-
                 const [commitRes, profileRes] = await Promise.all([
                     supabase.from('commitments').update({ status: newStatus }).eq('id', id),
                     supabase.from('profiles').select('gapp_score, executed, ghosted').eq('id', userId).single(),
@@ -407,50 +345,38 @@ function renderCheckinModal(commitments, currentScore, userId) {
                 if (commitRes.error) throw commitRes.error;
 
                 if (profileRes.data) {
-                    const p       = profileRes.data;
+                    const p = profileRes.data;
                     const updates = { gapp_score: (p.gapp_score ?? 100) + delta };
-                    if (action === 'done')  updates.executed = (p.executed ?? 0) + 1;
-                    else                    updates.ghosted  = (p.ghosted  ?? 0) + 1;
+                    if (action === 'done') updates.executed = (p.executed ?? 0) + 1;
+                    else                   updates.ghosted  = (p.ghosted  ?? 0) + 1;
                     await supabase.from('profiles').update(updates).eq('id', userId);
                 }
 
-                // Contextual toast
                 if (action === 'done') showToast('🔥 +5 pts! You\'re on a roll.', 'success');
                 else                   showToast('📉 −10 pts. Bounce back tomorrow.', 'error');
 
-                // Tier change toast
-                const prevTierName = getTierLabel(liveScore - delta);
-                const newTierName  = getTierLabel(liveScore);
+                const prevTierName = getTierName(liveScore - delta);
+                const newTierName  = getTierName(liveScore);
                 if (prevTierName !== newTierName && action === 'done') {
-                    setTimeout(() => showToast(`🏆 You just hit ${newTierName.replace(/[^\w\s]/g, '').trim()} tier!`, 'tier', 4000), 400);
+                    setTimeout(() => showToast(`🏆 You just hit ${newTierName} tier!`, 'tier', 4000), 400);
                 }
 
             } catch {
-                // Revert on error
                 stateMap[id] = null;
                 actedCount--;
                 liveScore -= delta;
-                syncScorePill();
+                syncPill();
                 if (itemEl) {
                     itemEl.classList.remove('done-state', 'ghost-state');
                     itemEl.querySelectorAll('.checkin-btn').forEach(b => { b.disabled = false; });
                 }
-                showToast('Failed to update. Please try again.', 'error');
+                showToast('Failed to update. Try again.', 'error');
             }
 
-            // Auto-close when all committed
-            if (actedCount === total) {
-                setTimeout(closeModal, 900);
-            }
+            if (actedCount === total) setTimeout(closeModal, 800);
         });
     });
 
-    overlay.querySelector('#checkin-dismiss').addEventListener('click', closeModal);
+    overlay.querySelector('#ci-dismiss').addEventListener('click', closeModal);
     overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
-
-    function getTierLabel(s) {
-        if (s >= 90) return 'Elite 🏆';
-        if (s >= 60) return 'On Track ✅';
-        return 'At Risk ⚠️';
-    }
 }

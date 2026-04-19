@@ -1,4 +1,4 @@
-// Commitment Engine Page
+// Commitments Page — Neural Accountability Terminal
 import { supabase } from '../supabase.js';
 import { getUser } from '../auth.js';
 import { showToast } from '../main.js';
@@ -13,52 +13,65 @@ export async function renderCommitmentsPage(container) {
         <div class="page fade-in">
             <div class="page-header">
                 <h1 class="page-title">Commitment Engine</h1>
-                <p class="page-subtitle">Make a commitment and follow through. Build your reliability score.</p>
+                <p class="page-subtitle">// make it, track it, execute it — or own the ghost</p>
             </div>
 
-            <div class="two-col">
-                <!-- New commitment form -->
+            <div class="two-col" style="align-items:start;">
+
+                <!-- ── Form column ── -->
                 <div>
-                    <div class="card card-glow" style="position: sticky; top: 100px;">
-                        <div class="card-title" style="display:flex; align-items:center; gap:8px;">
-                            <span>⚡</span> New Commitment
+                    <div style="border:1px solid var(--bg-border); border-top:2px solid var(--orange); padding:24px; position:sticky; top:72px;">
+
+                        <div style="font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:0.15em; color:var(--text-secondary); margin-bottom:20px;">
+                            ⚡ New Commitment
                         </div>
-                        <form id="commitment-form" style="margin-top:16px;">
+
+                        <form id="commitment-form">
                             <div class="input-group">
-                                <label class="input-label">What are you committing to?</label>
+                                <label class="input-label">What will you execute?</label>
                                 <input
                                     type="text"
                                     class="input"
                                     id="commit-title"
-                                    placeholder="e.g., Complete the project report"
+                                    placeholder="WHAT WILL YOU EXECUTE?"
                                     required
                                     autocomplete="off"
+                                    style="font-size:15px; text-transform:uppercase;"
                                 />
                             </div>
-                            <div class="input-group">
-                                <label class="input-label">Implementation Intention <span style="color:var(--text-dim)">(optional)</span></label>
+
+                            <!-- Collapsible trigger -->
+                            <button type="button" id="toggle-intention"
+                                style="background:none; border:none; font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-secondary); padding:0; margin-bottom:16px; display:flex; align-items:center; gap:6px; transition:color 0.15s;">
+                                <span id="intention-arrow">▸</span> Add when/where trigger
+                            </button>
+
+                            <div id="intention-group" class="input-group" style="display:none;">
+                                <label class="input-label">When ___, I will ___</label>
                                 <textarea
                                     class="input"
                                     id="commit-intention"
-                                    placeholder="When _______, I will _______&#10;&#10;e.g., When I sit at my desk after lunch, I will open the report and write for 30 minutes."
+                                    placeholder="e.g. When I sit at my desk after lunch, I will open the report for 30 minutes."
+                                    style="min-height:80px;"
                                 ></textarea>
                             </div>
-                            <button type="submit" class="btn btn-primary btn-full" id="commit-submit">
-                                Lock Commitment
+
+                            <button type="submit" class="btn-lock" id="commit-submit">
+                                LOCK IT IN →
                             </button>
                         </form>
                     </div>
                 </div>
 
-                <!-- Commitments list -->
+                <!-- ── List column ── -->
                 <div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                        <h2 style="font-size:18px; font-weight:700; color:var(--text-muted);">Your Commitments</h2>
-                        <div id="filter-btns" style="display:flex; gap:4px;">
-                            <button class="btn btn-ghost filter-btn active" data-filter="all"       style="padding:6px 12px; font-size:11px;">All</button>
-                            <button class="btn btn-ghost filter-btn"        data-filter="pending"   style="padding:6px 12px; font-size:11px;">Pending</button>
-                            <button class="btn btn-ghost filter-btn"        data-filter="completed" style="padding:6px 12px; font-size:11px;">Done</button>
-                            <button class="btn btn-ghost filter-btn"        data-filter="ghosted"   style="padding:6px 12px; font-size:11px;">Ghosted</button>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+                        <span style="font-family:var(--font-heading); font-size:16px; font-weight:700; color:var(--text-primary);">Your Commitments</span>
+                        <div id="filter-btns" style="display:flex; gap:2px;">
+                            <button class="btn btn-ghost filter-btn active" data-filter="all"       style="font-size:10px; padding:5px 12px;">All</button>
+                            <button class="btn btn-ghost filter-btn"        data-filter="pending"   style="font-size:10px; padding:5px 12px;">Pending</button>
+                            <button class="btn btn-ghost filter-btn"        data-filter="completed" style="font-size:10px; padding:5px 12px;">Done</button>
+                            <button class="btn btn-ghost filter-btn"        data-filter="ghosted"   style="font-size:10px; padding:5px 12px;">Ghosted</button>
                         </div>
                     </div>
                     <div id="commitments-list"></div>
@@ -68,6 +81,19 @@ export async function renderCommitmentsPage(container) {
     `;
 
     let currentFilter = 'all';
+
+    // ── Toggle intention field ──
+    const toggleBtn     = container.querySelector('#toggle-intention');
+    const intentionGrp  = container.querySelector('#intention-group');
+    const intentionArrow = container.querySelector('#intention-arrow');
+    let intentionOpen   = false;
+
+    toggleBtn.addEventListener('click', () => {
+        intentionOpen = !intentionOpen;
+        intentionGrp.style.display  = intentionOpen ? 'block' : 'none';
+        intentionArrow.textContent  = intentionOpen ? '▾' : '▸';
+        toggleBtn.style.color       = intentionOpen ? 'var(--orange)' : 'var(--text-secondary)';
+    });
 
     // ── Filter buttons ──
     container.querySelectorAll('.filter-btn').forEach(btn => {
@@ -82,6 +108,7 @@ export async function renderCommitmentsPage(container) {
     // ── Load & render commitments ──
     async function loadCommitments() {
         const listEl = container.querySelector('#commitments-list');
+        listEl.innerHTML = `<div style="padding:20px; font-family:var(--font-mono); font-size:11px; color:var(--text-dim);">Loading...</div>`;
 
         let query = supabase
             .from('commitments')
@@ -94,16 +121,16 @@ export async function renderCommitmentsPage(container) {
         const { data, error } = await query;
 
         if (error) {
-            listEl.innerHTML = `<p style="color:var(--text-muted);">Error loading commitments.</p>`;
+            listEl.innerHTML = `<p style="color:var(--text-secondary); font-family:var(--font-mono); font-size:12px; padding:20px;">Error loading commitments.</p>`;
             return;
         }
 
         if (!data || data.length === 0) {
             listEl.innerHTML = `
                 <div class="empty-state">
-                    <div class="icon">📋</div>
-                    <p>No commitments ${currentFilter !== 'all' ? `with status "${currentFilter}"` : 'yet'}.</p>
-                    <p style="color:var(--text-dim); font-size:13px;">Make your first commitment to start building your score.</p>
+                    <div class="icon">◈</div>
+                    <p style="margin-bottom:4px;">${currentFilter !== 'all' ? `No ${currentFilter} commitments.` : 'No commitments yet.'}</p>
+                    <p style="color:var(--text-dim); font-size:12px;">Lock your first commitment above to start building your score.</p>
                 </div>
             `;
             return;
@@ -120,31 +147,33 @@ export async function renderCommitmentsPage(container) {
                         ${c.implementation_intention
                             ? `<div class="commitment-intention">&ldquo;${escapeHtml(c.implementation_intention)}&rdquo;</div>`
                             : ''}
-                        <div class="commitment-meta">${timeAgo}</div>
+                        <div class="commitment-meta">
+                            <span class="commitment-status-badge status-${c.status}">${c.status}</span>
+                            &nbsp;·&nbsp; ${timeAgo}
+                        </div>
                     </div>
                     <div class="commitment-actions">
                         ${c.status === 'pending'
-                            ? `<button class="btn btn-success" data-action="complete" data-id="${c.id}">✓ Done</button>
-                               <button class="btn btn-danger"  data-action="ghost"    data-id="${c.id}">✗ Ghost</button>`
-                            : `<span class="commitment-status-badge status-${c.status}">${c.status}</span>`
+                            ? `<button class="action-btn action-btn-done"  data-action="complete" data-id="${c.id}">Execute</button>
+                               <button class="action-btn action-btn-ghost" data-action="ghost"    data-id="${c.id}">Ghost</button>`
+                            : ''
                         }
                     </div>
                 </div>
             `;
         }).join('');
 
-        // Bind action buttons
         listEl.querySelectorAll('[data-action]').forEach(btn => {
             btn.addEventListener('click', () => handleAction(btn.dataset.id, btn.dataset.action));
         });
     }
 
-    // ── Handle Done / Ghost actions ──
+    // ── Action handler ──
     async function handleAction(commitmentId, action) {
         const newStatus  = action === 'complete' ? 'completed' : 'ghosted';
         const scoreDelta = action === 'complete' ? 5 : -10;
 
-        // Ghost shake animation before state change
+        // Ghost shake
         if (action === 'ghost') {
             const itemEl = container.querySelector(`[data-id="${commitmentId}"]`);
             if (itemEl) {
@@ -153,25 +182,21 @@ export async function renderCommitmentsPage(container) {
             }
         }
 
-        // Optimistic: disable buttons immediately
+        // Optimistic — disable buttons
         const itemEl = container.querySelector(`[data-id="${commitmentId}"]`);
-        if (itemEl) {
-            itemEl.querySelectorAll('button').forEach(b => { b.disabled = true; });
-        }
+        if (itemEl) itemEl.querySelectorAll('button').forEach(b => { b.disabled = true; });
 
-        // Update commitment status
         const { error: commitError } = await supabase
             .from('commitments')
             .update({ status: newStatus })
             .eq('id', commitmentId);
 
         if (commitError) {
-            showToast('Failed to update commitment. Please try again.', 'error');
+            showToast('Failed to update. Try again.', 'error');
             if (itemEl) itemEl.querySelectorAll('button').forEach(b => { b.disabled = false; });
             return;
         }
 
-        // Fetch current profile & update score
         const { data: profile } = await supabase
             .from('profiles')
             .select('gapp_score, total_commitments, executed, ghosted')
@@ -181,14 +206,13 @@ export async function renderCommitmentsPage(container) {
         if (profile) {
             const prevScore = profile.gapp_score ?? 100;
             const newScore  = prevScore + scoreDelta;
-
-            const updates = { gapp_score: newScore };
+            const updates   = { gapp_score: newScore };
             if (action === 'complete') updates.executed = (profile.executed ?? 0) + 1;
             else                       updates.ghosted  = (profile.ghosted  ?? 0) + 1;
 
             await supabase.from('profiles').update(updates).eq('id', user.id);
 
-            // Tier change toast
+            // Tier-change toast
             const prevTier = getTierName(prevScore);
             const newTier  = getTierName(newScore);
             if (prevTier !== newTier && action === 'complete') {
@@ -196,12 +220,8 @@ export async function renderCommitmentsPage(container) {
             }
         }
 
-        // Contextual action toast
-        if (action === 'complete') {
-            showToast('🔥 +5 pts! You\'re on a roll.', 'success');
-        } else {
-            showToast('📉 −10 pts. Bounce back tomorrow.', 'error');
-        }
+        if (action === 'complete') showToast('🔥 +5 pts! You\'re on a roll.', 'success');
+        else                       showToast('📉 −10 pts. Bounce back tomorrow.', 'error');
 
         loadCommitments();
     }
@@ -217,19 +237,18 @@ export async function renderCommitmentsPage(container) {
 
         const submitBtn = container.querySelector('#commit-submit');
         submitBtn.disabled    = true;
-        submitBtn.textContent = 'Locking...';
+        submitBtn.textContent = 'LOCKING...';
 
         const { error } = await supabase.from('commitments').insert([{
-            user_id:                   user.id,
+            user_id:                  user.id,
             title,
-            implementation_intention:  intention || null,
-            status:                    'pending',
+            implementation_intention: intention || null,
+            status:                   'pending',
         }]);
 
         if (error) {
-            showToast('Failed to create commitment. Please try again.', 'error');
+            showToast('Failed to create commitment. Try again.', 'error');
         } else {
-            // Increment total_commitments on profile
             const { data: profile } = await supabase
                 .from('profiles')
                 .select('total_commitments')
@@ -244,15 +263,14 @@ export async function renderCommitmentsPage(container) {
 
             container.querySelector('#commit-title').value     = '';
             container.querySelector('#commit-intention').value = '';
-            showToast('⚡ Commitment locked! Now execute.', 'warning');
+            showToast('⚡ Commitment locked. Now execute.', 'warning');
             loadCommitments();
         }
 
         submitBtn.disabled    = false;
-        submitBtn.textContent = 'Lock Commitment';
+        submitBtn.textContent = 'LOCK IT IN →';
     });
 
-    // Initial load
     loadCommitments();
 }
 
