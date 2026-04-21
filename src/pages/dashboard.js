@@ -52,14 +52,88 @@ export async function renderDashboardPage(container) {
         return;
     }
 
+    // Concurrent fetch for additional Analytics
+    const [commitRes, logRes] = await Promise.all([
+        supabase.from('commitments').select('completed_at, created_at').eq('user_id', user.id).eq('status', 'completed'),
+        supabase.from('score_log').select('score, created_at').eq('user_id', user.id).order('created_at', { ascending: true })
+    ]);
+
+    const completedCommits = commitRes.data || [];
+    const scoreLog = logRes.data || [];
+
     const score    = profile.gapp_score        ?? 100;
     const total    = profile.total_commitments ?? 0;
     const executed = profile.executed          ?? 0;
     const ghosted  = profile.ghosted           ?? 0;
-    const streak   = profile.current_streak    ?? 0;
+    
+    // Calculate Streak Dynamically
+    const activeDates = new Set(completedCommits.map(c => new Date(c.completed_at || c.created_at).toLocaleDateString('en-CA')));
+    let computedStreak = 0;
+    let currDay = new Date();
+    const todayStr = currDay.toLocaleDateString('en-CA');
+    const yestDay = new Date(currDay.getTime() - 86400000);
+    const yestStr = yestDay.toLocaleDateString('en-CA');
+    if (activeDates.has(todayStr)) { computedStreak = 1; currDay = yestDay; }
+    else if (activeDates.has(yestStr)) { computedStreak = 0; currDay = yestDay; }
+    while(activeDates.has(currDay.toLocaleDateString('en-CA')) && computedStreak > 0) {
+        computedStreak++;
+        currDay = new Date(currDay.getTime() - 86400000);
+    }
+    const streak = computedStreak > 0 ? computedStreak : (profile.current_streak ?? 0);
+
     const pending  = Math.max(0, total - executed - ghosted);
     const rate     = total === 0 ? 100 : Math.round((executed / total) * 100);
     const tier     = getTier(score);
+
+    // Render Analytics Chart
+    let chartPoints = [];
+    let chartHtml = '';
+    if (scoreLog.length > 0) {
+        const width = 400; const height = 100; const padding = 10;
+        let pLog = scoreLog.length === 1 ? [{ score: 100, created_at: new Date(Date.now() - 86400000).toISOString() }, ...scoreLog] : scoreLog;
+        const minS = Math.min(...pLog.map(s => s.score)) - 5;
+        const maxS = Math.max(...pLog.map(s => s.score)) + 5;
+        const rY = maxS - minS || 1;
+        const rX = new Date(pLog[pLog.length-1].created_at) - new Date(pLog[0].created_at) || 1;
+        const pts = pLog.map(p => {
+            const x = padding + ((new Date(p.created_at) - new Date(pLog[0].created_at)) / rX) * (width - padding*2);
+            const y = padding + (height - padding*2) - ((p.score - minS) / rY) * (height - padding*2);
+            return `${x},${y}`;
+        });
+        chartHtml = `<svg viewBox="0 0 ${width} ${height}" style="width:100%; height:100%; overflow:visible;">
+            <defs>
+                <linearGradient id="glow" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="var(--primary)" stop-opacity="0.25"></stop>
+                    <stop offset="100%" stop-color="var(--primary)" stop-opacity="0"></stop>
+                </linearGradient>
+                <filter id="blur"><feGaussianBlur stdDeviation="3"/></filter>
+            </defs>
+            <polyline points="${pts.join(' ')}" fill="none" stroke="var(--primary)" stroke-width="4" filter="url(#blur)" opacity="0.5"/>
+            <polyline points="${pts.join(' ')}" fill="none" stroke="var(--primary)" stroke-width="2" />
+            <polygon points="${padding},${height} ${pts.join(' ')} ${width-padding},${height}" fill="url(#glow)"/>
+        </svg>`;
+    } else {
+        chartHtml = `<div style="display:flex; height:100%; align-items:center; justify-content:center; color:var(--text-dim); font-size:11px; font-family:var(--font-mono); text-transform:uppercase;">No analytics yet. Execute to plot.</div>`;
+    }
+
+    // Render Heatmap
+    let heatmapHtml = '<div style="display:flex; gap:4px; align-items:flex-end;">';
+    const nowDt = new Date();
+    for(let w=11; w>=0; w--) {
+        heatmapHtml += '<div style="display:flex; flex-direction:column; gap:4px;">';
+        for(let d=6; d>=0; d--) {
+            const dateObj = new Date(nowDt.getTime() - (w*7 + d)*86400000);
+            const dtStr = dateObj.toLocaleDateString('en-CA');
+            const count = completedCommits.filter(c => new Date(c.completed_at || c.created_at).toLocaleDateString('en-CA') === dtStr).length;
+            let bg = 'rgba(255,255,255,0.05)';
+            if(count === 1) bg = 'rgba(255,107,53,0.4)';
+            if(count === 2) bg = 'rgba(255,107,53,0.7)';
+            if(count > 2) bg = 'rgba(255,107,53,1)';
+            heatmapHtml += `<div style="width:12px; height:12px; border-radius:2px; background:${bg};" title="${dtStr}: ${count}"></div>`;
+        }
+        heatmapHtml += '</div>';
+    }
+    heatmapHtml += '</div>';
 
     // Rate bar color
     const rateColor = rate >= 75 ? 'var(--green)' : rate >= 50 ? 'var(--orange)' : 'var(--red)';
@@ -146,8 +220,22 @@ export async function renderDashboardPage(container) {
                         </div>
                     </div>
 
+                    <!-- NEW: Analytics Row -->
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px;">
+                        <!-- Heatmap -->
+                        <div style="background:var(--glass-fill); border:1px solid var(--bg-border); padding:20px; border-radius:16px;">
+                            <div style="font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:0.15em; color:var(--text-secondary); margin-bottom:12px;">Activity Heatmap</div>
+                            <div style="overflow-x:auto;">${heatmapHtml}</div>
+                        </div>
+                        <!-- Score Chart -->
+                        <div style="background:var(--glass-fill); border:1px solid var(--bg-border); padding:20px; border-radius:16px; display:flex; flex-direction:column;">
+                            <div style="font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:0.15em; color:var(--text-secondary); margin-bottom:12px;">Score Trend</div>
+                            <div style="flex:1;">${chartHtml}</div>
+                        </div>
+                    </div>
+
                     <!-- Scoring rules -->
-                    <div style="padding:16px 20px; border-top:1px solid var(--bg-border); display:flex; gap:32px; align-items:center; flex-wrap:wrap;">
+                    <div style="padding:16px 20px; border-top:1px solid var(--bg-border); display:flex; gap:32px; align-items:center; flex-wrap:wrap; margin-top:16px;">
                         <div>
                             <span style="font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:0.15em; color:var(--text-secondary);">Scoring</span>
                         </div>
@@ -156,8 +244,6 @@ export async function renderDashboardPage(container) {
                             <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); align-self:center;">executed</span>
                             <span style="font-family:var(--font-display); font-size:22px; color:var(--red);">-10</span>
                             <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); align-self:center;">ghosted</span>
-                            <span style="font-family:var(--font-display); font-size:22px; color:var(--orange);">100</span>
-                            <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); align-self:center;">start</span>
                         </div>
                     </div>
 
@@ -350,6 +436,7 @@ function renderCheckinModal(commitments, currentScore, userId) {
                     if (action === 'done') updates.executed = (p.executed ?? 0) + 1;
                     else                   updates.ghosted  = (p.ghosted  ?? 0) + 1;
                     await supabase.from('profiles').update(updates).eq('id', userId);
+                    await supabase.from('score_log').insert([{ user_id: userId, score: updates.gapp_score }]);
                 }
 
                 if (action === 'done') showToast('🔥 +5 pts! You\'re on a roll.', 'success');

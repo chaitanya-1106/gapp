@@ -21,7 +21,8 @@ export function startRouter() {
             currentCleanup = null;
         }
 
-        const handler = routes[hash];
+        const pathOnly = hash.split('?')[0];
+        const handler = routes[pathOnly];
         if (handler) {
             currentCleanup = await handler(app);
         } else {

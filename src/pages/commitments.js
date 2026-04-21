@@ -56,6 +56,11 @@ export async function renderCommitmentsPage(container) {
                                 ></textarea>
                             </div>
 
+                            <div class="input-group" style="margin-top:16px;">
+                                <label class="input-label">Scheduled Date/Time (Optional)</label>
+                                <input type="datetime-local" class="input" id="commit-datetime" />
+                            </div>
+
                             <button type="submit" class="btn-lock" id="commit-submit">
                                 LOCK IT IN →
                             </button>
@@ -139,6 +144,21 @@ export async function renderCommitmentsPage(container) {
         listEl.innerHTML = data.map(c => {
             const statusClass = c.status === 'completed' ? 'completed' : c.status === 'ghosted' ? 'ghosted' : '';
             const timeAgo     = getTimeAgo(new Date(c.created_at));
+            
+            let dateStr = '';
+            let gcalLink = '';
+            if (c.scheduled_for) {
+                const dateObj = new Date(c.scheduled_for);
+                dateStr = `&nbsp;·&nbsp; 📅 ${dateObj.toLocaleString(undefined, {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'})}`;
+                
+                if (c.status === 'pending') {
+                    // Start and end (duration 30 mins) formatted for Google Calendar: YYYYMMDDTHHMMSSZ
+                    const endObj = new Date(dateObj.getTime() + 30*60000);
+                    const fmt = d => d.toISOString().replace(/-|:|\.\d\d\d/g, "");
+                    const gcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(c.title)}&dates=${fmt(dateObj)}/${fmt(endObj)}&details=${encodeURIComponent(c.implementation_intention||'')}`;
+                    gcalLink = `<a href="${gcalUrl}" target="_blank" class="action-btn" style="text-decoration:none; display:inline-block; margin-left:4px;" title="Add to Google Calendar">🗓️ GCal</a>`;
+                }
+            }
 
             return `
                 <div class="commitment-item ${statusClass}" data-id="${c.id}">
@@ -150,12 +170,14 @@ export async function renderCommitmentsPage(container) {
                         <div class="commitment-meta">
                             <span class="commitment-status-badge status-${c.status}">${c.status}</span>
                             &nbsp;·&nbsp; ${timeAgo}
+                            ${dateStr}
                         </div>
                     </div>
                     <div class="commitment-actions">
                         ${c.status === 'pending'
                             ? `<button class="action-btn action-btn-done"  data-action="complete" data-id="${c.id}">Execute</button>
-                               <button class="action-btn action-btn-ghost" data-action="ghost"    data-id="${c.id}">Ghost</button>`
+                               <button class="action-btn action-btn-ghost" data-action="ghost"    data-id="${c.id}">Ghost</button>
+                               ${gcalLink}`
                             : ''
                         }
                     </div>
@@ -186,9 +208,14 @@ export async function renderCommitmentsPage(container) {
         const itemEl = container.querySelector(`[data-id="${commitmentId}"]`);
         if (itemEl) itemEl.querySelectorAll('button').forEach(b => { b.disabled = true; });
 
+        const updatePayload = { status: newStatus };
+        if (newStatus === 'completed') {
+            updatePayload.completed_at = new Date().toISOString();
+        }
+
         const { error: commitError } = await supabase
             .from('commitments')
-            .update({ status: newStatus })
+            .update(updatePayload)
             .eq('id', commitmentId);
 
         if (commitError) {
@@ -211,6 +238,12 @@ export async function renderCommitmentsPage(container) {
             else                       updates.ghosted  = (profile.ghosted  ?? 0) + 1;
 
             await supabase.from('profiles').update(updates).eq('id', user.id);
+            
+            // Insert score log
+            await supabase.from('score_log').insert([{
+                user_id: user.id,
+                score: newScore
+            }]);
 
             // Tier-change toast
             const prevTier = getTierName(prevScore);
@@ -239,10 +272,14 @@ export async function renderCommitmentsPage(container) {
         submitBtn.disabled    = true;
         submitBtn.textContent = 'LOCKING...';
 
+        const datetimeInput = container.querySelector('#commit-datetime').value;
+        const scheduledFor  = datetimeInput ? new Date(datetimeInput).toISOString() : null;
+
         const { error } = await supabase.from('commitments').insert([{
             user_id:                  user.id,
             title,
             implementation_intention: intention || null,
+            scheduled_for:            scheduledFor,
             status:                   'pending',
         }]);
 
@@ -263,6 +300,7 @@ export async function renderCommitmentsPage(container) {
 
             container.querySelector('#commit-title').value     = '';
             container.querySelector('#commit-intention').value = '';
+            container.querySelector('#commit-datetime').value  = '';
             showToast('⚡ Commitment locked. Now execute.', 'warning');
             loadCommitments();
         }

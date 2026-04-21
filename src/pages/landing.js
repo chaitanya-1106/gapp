@@ -1,19 +1,27 @@
 // Landing Page — Liquid Glass / Vitreous Neon
 import { navigate }                          from '../router.js';
-import { signUp, signIn, ensureProfile, getUser } from '../auth.js';
+import { signUp, signIn, ensureProfile, getUser, getSession } from '../auth.js';
+import { renderNav, setupNavListeners } from '../main.js';
 
-export function renderLandingPage(container) {
+export async function renderLandingPage(container) {
+    const session = await getSession();
+
     container.innerHTML = `
         <div class="landing-wrapper">
 
-            <!-- ── Floating Island Nav ── -->
-            <nav class="nav" id="main-nav" role="navigation" aria-label="Main navigation">
-                <a class="nav-logo" href="#/" aria-label="GAPP home">
-                    <img src="/gapp_logo.png" alt="GAPP" class="nav-logo-img" />
-                </a>
-                <div class="nav-links"></div>
-                <button id="nav-login-btn" class="nav-link signout">Log In</button>
-            </nav>
+            ${session 
+                ? renderNav('/') 
+                : `
+                <!-- ── Floating Island Nav ── -->
+                <nav class="nav" id="main-nav" role="navigation" aria-label="Main navigation">
+                    <a class="nav-logo" href="#/" aria-label="GAPP home">
+                        <img src="/gapp_logo.png" alt="GAPP" class="nav-logo-img" />
+                    </a>
+                    <div class="nav-links"></div>
+                    <button id="nav-login-btn" class="nav-link signout">Log In</button>
+                </nav>
+                `
+            }
 
             <!-- ── Hero ── -->
             <div class="landing-hero">
@@ -40,9 +48,9 @@ export function renderLandingPage(container) {
                     <!-- CTA group -->
                     <div class="landing-cta-group">
                         <button id="hero-cta-btn" class="btn-lock" style="width:auto; padding:0 44px;">
-                            START TRACKING →
+                            ${session ? 'VIEW DASHBOARD →' : 'START TRACKING →'}
                         </button>
-                        <span style="font-family:var(--font-label); font-size:11px; font-weight:500; color:var(--text-ghost); text-transform:uppercase; letter-spacing:0.14em;">Free. No credit card.</span>
+                        ${session ? '' : '<span style="font-family:var(--font-label); font-size:11px; font-weight:500; color:var(--text-ghost); text-transform:uppercase; letter-spacing:0.14em;">Free. No credit card.</span>'}
                     </div>
 
                     <!-- Glass stat bubbles -->
@@ -163,6 +171,66 @@ export function renderLandingPage(container) {
                 </div>
             </div>
 
+            <!-- ── Platform Mechanics ── -->
+            <div class="landing-section">
+                <div style="max-width:1200px; margin:0 auto;">
+                    <div style="font-family:var(--font-label); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.28em; color:var(--primary); margin-bottom:40px; display:flex; align-items:center; gap:12px;">
+                        <span style="display:inline-block; width:28px; height:1px; background:var(--primary); opacity:0.6;"></span>
+                        Platform Mechanics
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+
+                        <!-- ── Scoring system ── -->
+                        <div style="background:var(--glass-fill); border:1px solid var(--glass-border); border-radius:24px; overflow:hidden; backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); box-shadow:var(--shadow-float);">
+                            <div style="padding:18px 28px; border-bottom:1px solid rgba(255,255,255,0.06); font-family:var(--font-label); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.28em; color:var(--primary); display:flex; align-items:center; gap:10px;">
+                                Scoring System
+                            </div>
+                            <div style="display:flex; flex-direction:column;">
+                                <div style="display:flex; padding:24px; border-bottom:1px solid rgba(255,255,255,0.06); align-items:center; justify-content:space-between;">
+                                    <div style="font-family:var(--font-head); font-size:44px; font-weight:900; line-height:1; color:var(--primary); letter-spacing:-0.04em; text-shadow:0 0 30px rgba(255,107,53,0.3);">100</div>
+                                    <div style="font-family:var(--font-label); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.18em; color:var(--text-dim); text-align:right;">Starting<br>Score</div>
+                                </div>
+                                <div style="display:flex; padding:24px; border-bottom:1px solid rgba(255,255,255,0.06); align-items:center; justify-content:space-between;">
+                                    <div style="font-family:var(--font-head); font-size:44px; font-weight:900; line-height:1; color:var(--tertiary); letter-spacing:-0.04em; text-shadow:0 0 30px rgba(123,255,216,0.3);">+5</div>
+                                    <div style="font-family:var(--font-label); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.18em; color:var(--text-dim); text-align:right;">Per Commitment<br>Executed</div>
+                                </div>
+                                <div style="display:flex; padding:24px; align-items:center; justify-content:space-between;">
+                                    <div style="font-family:var(--font-head); font-size:44px; font-weight:900; line-height:1; color:var(--red); letter-spacing:-0.04em; text-shadow:0 0 30px rgba(255,113,108,0.3);">−10</div>
+                                    <div style="font-family:var(--font-label); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.18em; color:var(--text-dim); text-align:right;">Per Commitment<br>Ghosted</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ── Tier system ── -->
+                        <div style="background:var(--glass-fill); border:1px solid var(--glass-border); border-radius:24px; overflow:hidden; backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); box-shadow:var(--shadow-float);">
+                            <div style="padding:18px 28px; border-bottom:1px solid rgba(255,255,255,0.06); font-family:var(--font-label); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.28em; color:var(--primary); display:flex; align-items:center; gap:10px;">
+                                Tier System
+                            </div>
+                            <div style="padding:24px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 0; border-bottom:1px solid rgba(255,255,255,0.06);">
+                                    <div style="font-family:var(--font-head); font-size:20px; font-weight:800; color:var(--tertiary); letter-spacing:-0.01em;">ELITE</div>
+                                    <div style="font-family:var(--font-mono); font-weight:600; color:var(--text-primary);">≥ 90</div>
+                                </div>
+                                <div style="font-family:var(--font-body); font-size:13px; color:var(--text-secondary); margin-bottom:24px; padding-top:8px;">Exceptional follow-through. Top-tier reliability.</div>
+
+                                <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 0; border-bottom:1px solid rgba(255,255,255,0.06);">
+                                    <div style="font-family:var(--font-head); font-size:20px; font-weight:800; color:var(--primary); letter-spacing:-0.01em;">ON TRACK</div>
+                                    <div style="font-family:var(--font-mono); font-weight:600; color:var(--text-primary);">60 – 89</div>
+                                </div>
+                                <div style="font-family:var(--font-body); font-size:13px; color:var(--text-secondary); margin-bottom:24px; padding-top:8px;">Reliable execution. Room to push higher.</div>
+
+                                <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 0; border-bottom:1px solid rgba(255,255,255,0.06);">
+                                    <div style="font-family:var(--font-head); font-size:20px; font-weight:800; color:var(--red); letter-spacing:-0.01em;">AT RISK</div>
+                                    <div style="font-family:var(--font-mono); font-weight:600; color:var(--text-primary);">&lt; 60</div>
+                                </div>
+                                <div style="font-family:var(--font-body); font-size:13px; color:var(--text-secondary); padding-top:8px;">Commitment pattern unreliable. Needs intervention.</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
             <!-- ── Bottom CTA ── -->
             <div class="landing-section" style="text-align:center; padding-bottom:96px;">
                 <div style="max-width:1200px; margin:0 auto;">
@@ -175,7 +243,7 @@ export function renderLandingPage(container) {
                         yourself accountable — visually, numerically, permanently.
                     </p>
                     <button id="bottom-cta-btn" class="btn-lock" style="width:auto; padding:0 64px; display:inline-flex; align-items:center; justify-content:center; height:60px; font-size:15px;">
-                        LOCK IN NOW →
+                        ${session ? 'ENTER TERMINAL →' : 'LOCK IN NOW →'}
                     </button>
                     <div style="margin-top:32px; display:flex; justify-content:center; gap:36px; font-family:var(--font-label); font-size:12px; font-weight:500; color:var(--text-ghost);">
                         <span>✓ Free forever</span>
@@ -186,13 +254,35 @@ export function renderLandingPage(container) {
             </div>
 
             <!-- ── Footer ── -->
-            <footer style="padding:28px 64px; border-top:1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-                <a href="#/" aria-label="GAPP home">
-                    <img src="/gapp_logo.png" alt="GAPP" style="height:36px; object-fit:contain;" />
-                </a>
-                <span style="font-family:var(--font-label); font-size:11px; font-weight:500; color:var(--text-ghost);">
-                    © ${new Date().getFullYear()} &nbsp;·&nbsp; Bridge the Commitment–Execution Gap
-                </span>
+            <footer style="padding:28px 64px; border-top:1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+                <div style="display:flex; align-items:center; gap:24px;">
+                    <a href="#/" aria-label="GAPP home">
+                        <img src="/gapp_logo.png" alt="GAPP" style="height:36px; object-fit:contain;" />
+                    </a>
+                    <span style="font-family:var(--font-label); font-size:11px; font-weight:500; color:var(--text-ghost);">
+                        © ${new Date().getFullYear()} &nbsp;·&nbsp; Bridge the Commitment–Execution Gap
+                    </span>
+                </div>
+                <div style="display:flex; gap:24px; align-items:center;">
+                    <a href="https://instagram.com" target="_blank" aria-label="Instagram" style="color:var(--text-ghost); transition:all 0.2s; display:flex;" onmouseover="this.style.color='var(--primary)'; this.style.filter='drop-shadow(0 0 6px var(--primary))';" onmouseout="this.style.color='var(--text-ghost)'; this.style.filter='none';">
+                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                        </svg>
+                    </a>
+                    <a href="https://youtube.com" target="_blank" aria-label="YouTube" style="color:var(--text-ghost); transition:all 0.2s; display:flex;" onmouseover="this.style.color='var(--primary)'; this.style.filter='drop-shadow(0 0 6px var(--primary))';" onmouseout="this.style.color='var(--text-ghost)'; this.style.filter='none';">
+                        <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path>
+                            <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon>
+                        </svg>
+                    </a>
+                    <a href="https://twitter.com" target="_blank" aria-label="X (Twitter)" style="color:var(--text-ghost); transition:all 0.2s; display:flex;" onmouseover="this.style.color='var(--primary)'; this.style.filter='drop-shadow(0 0 6px var(--primary))';" onmouseout="this.style.color='var(--text-ghost)'; this.style.filter='none';">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
+                        </svg>
+                    </a>
+                </div>
             </footer>
         </div>
 
@@ -265,10 +355,21 @@ export function renderLandingPage(container) {
         document.body.style.overflow = '';
     }
 
+    if (session) {
+        setupNavListeners(container);
+    }
+
     // Open triggers
-    document.getElementById('nav-login-btn').addEventListener('click',    openModal);
-    document.getElementById('hero-cta-btn').addEventListener('click',     openModal);
-    document.getElementById('bottom-cta-btn').addEventListener('click',   openModal);
+    if (!session) {
+        const navBtn = document.getElementById('nav-login-btn');
+        if (navBtn) navBtn.addEventListener('click', openModal);
+        
+        document.getElementById('hero-cta-btn').addEventListener('click',     openModal);
+        document.getElementById('bottom-cta-btn').addEventListener('click',   openModal);
+    } else {
+        document.getElementById('hero-cta-btn').addEventListener('click',     () => navigate('/dashboard'));
+        document.getElementById('bottom-cta-btn').addEventListener('click',   () => navigate('/dashboard'));
+    }
 
     // Close triggers
     closeBtn.addEventListener('click', closeModal);

@@ -80,7 +80,7 @@ export async function renderLeaderboardPage(container) {
                         ].filter(Boolean).join(' ');
 
                         return `
-                            <div class="lb-row ${rowCls}" style="animation-delay:${i * 40}ms;">
+                            <div class="lb-row ${rowCls}" style="animation-delay:${i * 40}ms; cursor:pointer; transition:all 0.2s;" onclick="window.location.hash='#/profile?id=${p.id}'" onmouseenter="this.style.background='rgba(255,255,255,0.03)'" onmouseleave="this.style.background='transparent'">
                                 <div class="lb-rank ${rankCls}">${rank}</div>
                                 <div class="lb-username">
                                     ${escapeHtml(p.username || 'anonymous')}
