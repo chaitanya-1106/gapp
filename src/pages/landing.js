@@ -263,25 +263,28 @@ export async function renderLandingPage(container) {
                         © ${new Date().getFullYear()} &nbsp;·&nbsp; Bridge the Commitment–Execution Gap
                     </span>
                 </div>
-                <div style="display:flex; gap:24px; align-items:center;">
-                    <a href="https://instagram.com" target="_blank" aria-label="Instagram" style="color:var(--text-ghost); transition:all 0.2s; display:flex;" onmouseover="this.style.color='var(--primary)'; this.style.filter='drop-shadow(0 0 6px var(--primary))';" onmouseout="this.style.color='var(--text-ghost)'; this.style.filter='none';">
-                        <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                            <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                        </svg>
-                    </a>
-                    <a href="https://youtube.com" target="_blank" aria-label="YouTube" style="color:var(--text-ghost); transition:all 0.2s; display:flex;" onmouseover="this.style.color='var(--primary)'; this.style.filter='drop-shadow(0 0 6px var(--primary))';" onmouseout="this.style.color='var(--text-ghost)'; this.style.filter='none';">
-                        <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path>
-                            <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon>
-                        </svg>
-                    </a>
-                    <a href="https://twitter.com" target="_blank" aria-label="X (Twitter)" style="color:var(--text-ghost); transition:all 0.2s; display:flex;" onmouseover="this.style.color='var(--primary)'; this.style.filter='drop-shadow(0 0 6px var(--primary))';" onmouseout="this.style.color='var(--text-ghost)'; this.style.filter='none';">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
-                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
-                        </svg>
-                    </a>
+                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:12px;">
+                    <span style="font-family:var(--font-label); font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.18em; color:var(--text-dim);">Connect with us</span>
+                    <div style="display:flex; gap:24px; align-items:center;">
+                        <a href="https://www.instagram.com/gappinnovations/" target="_blank" aria-label="Instagram" style="color:var(--text-secondary); transition:all 0.2s; display:flex;" onmouseover="this.style.color='var(--primary)'; this.style.filter='drop-shadow(0 0 8px var(--primary))';" onmouseout="this.style.color='var(--text-secondary)'; this.style.filter='none';">
+                            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                            </svg>
+                        </a>
+                        <a href="https://www.youtube.com/@gapp-w4j" target="_blank" aria-label="YouTube" style="color:var(--text-secondary); transition:all 0.2s; display:flex;" onmouseover="this.style.color='var(--primary)'; this.style.filter='drop-shadow(0 0 8px var(--primary))';" onmouseout="this.style.color='var(--text-secondary)'; this.style.filter='none';">
+                            <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path>
+                                <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon>
+                            </svg>
+                        </a>
+                        <a href="https://x.com/gapp_innovation" target="_blank" aria-label="X (Twitter)" style="color:var(--text-secondary); transition:all 0.2s; display:flex;" onmouseover="this.style.color='var(--primary)'; this.style.filter='drop-shadow(0 0 8px var(--primary))';" onmouseout="this.style.color='var(--text-secondary)'; this.style.filter='none';">
+                            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
+                            </svg>
+                        </a>
+                    </div>
                 </div>
             </footer>
         </div>
